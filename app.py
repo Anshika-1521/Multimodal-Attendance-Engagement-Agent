@@ -61,10 +61,9 @@ HTML = """
             <p>Flask application is working successfully!</p>
         </div>
         <br>
-            Test System
-        </button>
-    </div>
-</body>
+<br>
+<button type="button" onclick="document.getElementById('test-result').textContent='System is running successfully!'">Test System</button>
+<p id="test-result"></p>
 </html>
 """
 
