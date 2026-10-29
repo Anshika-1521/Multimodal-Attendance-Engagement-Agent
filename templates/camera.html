@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Face Detection</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f4f8;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px #ccc;
+        }
+
+        video {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 10px;
+            background: black;
+        }
+
+        button {
+            padding: 12px 25px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #2448a5;
+            color: white;
+            cursor: pointer;
+        }
+
+        #status {
+            font-weight: bold;
+            margin: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Multimodal Attendance Agent</h1>
+        <h2>Live Camera</h2>
+
+        <video id="camera" autoplay playsinline muted></video>
+        <br>
+
+<button onclick="captureImage()">Capture Image</button>
+<button onclick="detectFaces()">Detect Faces</button>
+
+<br>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<img id="capturedImage"
+     style="display:none; width:100%; max-width:600px; margin-top:20px; border-radius:10px;">
+
+<p id="captureStatus"></p>
+
+        <p id="status">Camera is not started.</p>
+
+        <button onclick="startCamera()">Start Camera</button>
+        <button onclick="stopCamera()">Stop Camera</button>
+
+        <p id="faceStatus">Face detection: Not started</p>
+    </div>
+
+    <script>
+        let stream = null;
+
+        async function startCamera() {
+            const video = document.getElementById("camera");
+            const status = document.getElementById("status");
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                });
+
+                video.srcObject = stream;
+                status.textContent = "Camera is running successfully!";
+                document.getElementById("faceStatus").textContent =
+                    "Camera ready. Face detection will be added next.";
+
+            } catch (error) {
+                status.textContent =
+                    "Camera access failed. Please allow camera permission.";
+                console.error(error);
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            document.getElementById("camera").srcObject = null;
+            document.getElementById("status").textContent =
+                "Camera stopped.";
+            document.getElementById("faceStatus").textContent =
+                "Face detection: Not started";
+        }
+function captureImage() {
+    const video = document.getElementById("camera");
+    const canvas = document.getElementById("canvas");
+    const image = document.getElementById("capturedImage");
+    const status = document.getElementById("captureStatus");
+
+    if (!stream || video.readyState < 2) {
+        status.textContent = "Please start the camera first!";
+        return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    image.src = canvas.toDataURL("image/jpeg");
+    image.style.display = "block";
+
+    status.textContent = "Image captured successfully!";
+}
+async function detectFaces() {
+    const image = document.getElementById("capturedImage");
+    const status = document.getElementById("captureStatus");
+
+    if (!image.src || image.style.display === "none") {
+        status.textContent = "Please capture an image first!";
+        return;
+    }
+
+    status.textContent = "Detecting faces... Please wait.";
+
+    try {
+        const response = await fetch("/detect_faces", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                image: image.src
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || "Face detection failed.");
+        }
+
+       status.textContent =
+       "Face Detection Successful! Faces: " + result.faces_detected +
+       " | Engagement Score: " + result.engagement_score + "%";
+
+    } catch (error) {
+        console.error(error);
+        status.textContent = "Error: " + error.message;
+    }
+}
+    </script>
+</body>
+</html>
+```
