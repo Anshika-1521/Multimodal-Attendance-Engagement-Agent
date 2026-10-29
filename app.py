@@ -61,7 +61,6 @@ HTML = """
             <p>Flask application is working successfully!</p>
         </div>
         <br>
-        <button onclick="alert('Your attendance agent is ready for development!')">
             Test System
         </button>
     </div>
